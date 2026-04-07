@@ -5,14 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>RF Toolkit - Map Distance Tool</title>
     
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#020617">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23020617'/%3E%3Ccircle cx='256' cy='256' r='120' fill='none' stroke='%234f46e5' stroke-width='32'/%3E%3Ccircle cx='256' cy='256' r='60' fill='%234f46e5'/%3E%3C/svg%3E">
-    <link rel="manifest" id="manifest-link">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -88,45 +80,11 @@
         /* Search Results Styles */
         #search-results { max-height: 250px; overflow-y: auto; }
     </style>
-    
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
-
-        // --- DYNAMIC PWA GENERATION ---
-        const manifestJSON = {
-            "name": "RF Toolkit",
-            "short_name": "RFToolkit",
-            "start_url": ".",
-            "display": "standalone",
-            "background_color": "#020617",
-            "theme_color": "#020617",
-            "icons": [{
-                "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23020617'/%3E%3Cpath fill='%234f46e5' d='M256 120A136 136 0 00120 256a136 136 0 00136 136 136 136 0 00136-136A136 136 0 00256 120zm0 216a80 80 0 1180-80 80 80 0 01-80 80z'/%3E%3C/svg%3E",
-                "sizes": "512x512",
-                "type": "image/svg+xml",
-                "purpose": "any maskable"
-            }]
-        };
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById('manifest-link').setAttribute('href', "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifestJSON)));
-            const swCode = `
-                self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                self.addEventListener('fetch', e => {
-                    e.respondWith(fetch(e.request).catch(() => new Response('Offline')));
-                });
-            `;
-            const swBlob = new Blob([swCode], {type: 'application/javascript'});
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW Reg Failed', err));
-            }
-        });
-    </script>
 </head>
 <body id="body" class="text-slate-200">
 
     <div class="aurora-bg transition-colors duration-1000"></div>
-    <div id="toast-container" class="fixed top-24 left-1/2 transform -translate-x-1/2 z-[2000] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm"></div>
+    <div id="toast-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[2000] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm"></div>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Modal -->
@@ -148,7 +106,7 @@
 
     <!-- MAIN MENU BUTTON (Top Left) -->
     <button onclick="toggleSidebar()" class="fixed top-6 left-6 z-[1100] glass-panel w-12 h-12 md:w-14 md:h-14 rounded-2xl text-white hover:bg-white/10 transition-all active:scale-90 shadow-2xl flex items-center justify-center">
-        <i data-lucide="menu" id="menu-icon" class="w-6 h-6"></i>
+        <i data-lucide="menu" id="menu-icon" class="w-5 h-5 md:w-6 md:h-6"></i>
     </button>
 
     <!-- SIDEBAR -->
@@ -165,10 +123,6 @@
             <button onclick="switchView('settings')" class="nav-btn w-full flex items-center space-x-3 px-4 py-4 rounded-2xl transition-all text-slate-400 hover:text-white hover:bg-white/10" id="nav-btn-settings">
                 <i data-lucide="settings" class="w-5 h-5"></i><span class="font-medium">Settings</span>
             </button>
-            <!-- Install App Button -->
-            <button onclick="installApp()" class="hidden nav-btn w-full flex items-center space-x-3 px-4 py-4 rounded-2xl transition-all text-emerald-400 hover:text-white hover:bg-white/10 bg-emerald-500/10 shadow-inner mt-4" id="install-app-btn">
-                <i data-lucide="download" class="w-5 h-5"></i><span class="font-medium">Install App (PWA)</span>
-            </button>
         </nav>
     </aside>
 
@@ -182,77 +136,78 @@
             <div class="absolute inset-0 pointer-events-none p-4 md:p-6 flex flex-col h-full w-full">
 
                 <!-- RIGHT COMMAND COLUMN -->
-                <div class="absolute top-6 right-4 md:right-6 flex flex-col items-end gap-3 z-[200] pointer-events-none">
+                <div class="absolute top-6 right-4 md:right-6 flex flex-col gap-2 z-[200] pointer-events-auto">
+                    <button onclick="toggleMapLayer()" id="hud-toggle-layer" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Toggle Satellite">
+                        <i data-lucide="layers" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
                     
-                    <!-- Vertical Tool Buttons -->
-                    <div class="flex flex-col gap-2 pointer-events-auto">
-                        <button onclick="toggleMapLayer()" id="hud-toggle-layer" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Toggle Satellite">
-                            <i data-lucide="layers" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </button>
-                        
-                        <button onclick="locateUser()" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Locate Me">
-                            <i data-lucide="navigation" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </button>
+                    <button onclick="locateUser()" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Locate Me">
+                        <i data-lucide="navigation" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
 
-                        <button onclick="toggleSiteLock()" id="hud-toggle-lock" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Anchor Point 1 as Site">
-                            <i data-lucide="anchor" id="lock-icon" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    <button onclick="toggleSiteLock()" id="hud-toggle-lock" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Anchor Point 1 as Site">
+                        <i data-lucide="anchor" id="lock-icon" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
+                    
+                    <div class="relative">
+                        <button onclick="toggleBandSelector()" id="hud-toggle-band" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Frequency Band for FSPL">
+                            <i data-lucide="radio" class="w-4 h-4 md:w-5 md:h-5"></i>
                         </button>
-                        
-                        <div class="relative">
-                            <button onclick="toggleBandSelector()" id="hud-toggle-band" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Frequency Band for FSPL">
-                                <i data-lucide="radio" class="w-4 h-4 md:w-5 md:h-5"></i>
-                            </button>
-                            <!-- Band Selector Flyout -->
-                            <div id="band-selector-panel" class="hidden absolute right-[115%] top-0 w-52 md:w-56 glass-panel p-3 md:p-4 rounded-2xl border-indigo-500/30 shadow-2xl z-[200]">
-                                <label class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">Select Band (FSPL)</label>
-                                <select id="map-band-select" onchange="updateMapFSPL(); toggleBandSelector();" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-[10px] md:text-[11px] font-bold text-white focus:outline-none transition-all cursor-pointer">
-                                    <option value="800">LTE B20 (800 MHz)</option>
-                                    <option value="900">GSM (900 MHz)</option>
-                                    <option value="1800" selected>LTE B3 (1800 MHz)</option>
-                                    <option value="2100">UMTS (2100 MHz)</option>
-                                    <option value="2600">LTE B7 (2600 MHz)</option>
-                                    <option value="3500">5G NR (3.5 GHz)</option>
-                                </select>
-                            </div>
+                        <!-- Band Selector Flyout -->
+                        <div id="band-selector-panel" class="hidden absolute right-[115%] top-0 w-52 md:w-56 glass-panel p-3 md:p-4 rounded-2xl border-indigo-500/30 shadow-2xl z-[200]">
+                            <label class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">Select Band (FSPL)</label>
+                            <select id="map-band-select" onchange="updateMapFSPL(); toggleBandSelector();" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-[10px] md:text-[11px] font-bold text-white focus:outline-none transition-all cursor-pointer">
+                                <option value="800">LTE B20 (800 MHz)</option>
+                                <option value="900">GSM (900 MHz)</option>
+                                <option value="1800" selected>LTE B3 (1800 MHz)</option>
+                                <option value="2100">UMTS (2100 MHz)</option>
+                                <option value="2600">LTE B7 (2600 MHz)</option>
+                                <option value="3500">5G NR (3.5 GHz)</option>
+                            </select>
                         </div>
-
-                        <button onclick="swapPoints()" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Swap Direction (P1 <-> P2)">
-                            <i data-lucide="arrow-down-up" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </button>
-
-                        <button onclick="toggleCoordinateHUD()" id="hud-toggle-inspect" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Point Info">
-                            <i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </button>
-
-                        <button onclick="clearMap(event)" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-red-400 hover:text-white bg-red-500/10 hover:bg-red-600 border border-red-500/30" title="Delete/Reset">
-                            <i data-lucide="trash-2" class="w-4 h-4 md:w-5 md:h-5"></i>
-                        </button>
                     </div>
 
-                    <!-- Results Box (Attached to the column) -->
-                    <div id="map-result-box" class="hidden glass-panel p-5 rounded-[2rem] w-48 pointer-events-auto flex-col gap-3 animate-fade-in shadow-2xl border-indigo-500/30 mt-2">
-                        <div class="text-center space-y-1">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Distance</p>
-                            <p id="map-dist-res" class="text-2xl font-black text-white tracking-tighter truncate">-</p>
-                            <p id="map-az-res" class="text-sm font-black text-teal-400">-</p>
+                    <button onclick="swapPoints()" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Swap Direction (P1 <-> P2)">
+                        <i data-lucide="arrow-down-up" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
+
+                    <button onclick="toggleCoordinateHUD()" id="hud-toggle-inspect" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-white hover:bg-white/10" title="Point Info">
+                        <i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
+
+                    <button onclick="clearMap(event)" class="glass-panel w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl transition-all flex items-center justify-center text-red-400 hover:text-white bg-red-500/10 hover:bg-red-600 border border-red-500/30" title="Delete/Reset">
+                        <i data-lucide="trash-2" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
+                </div>
+
+                <!-- DRAGGABLE HUD: Analysis Results (Floating Left of Command Column) -->
+                <div id="map-result-box" class="hidden hud-widget top-6 right-16 md:right-[5.5rem] w-40 md:w-52 animate-fade-in z-[150]">
+                    <div class="glass-panel p-4 md:p-5 rounded-[2rem] flex flex-col gap-3 shadow-2xl border-indigo-500/30 pointer-events-auto">
+                        <div class="drag-handle absolute top-0 left-0 right-0 h-6 flex justify-center items-center opacity-50 hover:opacity-100 transition-opacity" id="drag-handle-results">
+                            <div class="w-8 h-1 bg-white/30 rounded-full"></div>
+                        </div>
+                        <div class="text-center space-y-1 mt-2">
+                            <p class="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-widest">Distance</p>
+                            <p id="map-dist-res" class="text-xl md:text-3xl font-black text-white tracking-tighter truncate">-</p>
+                            <p id="map-az-res" class="text-xs md:text-sm font-black text-teal-400">-</p>
                         </div>
                         <div class="h-px bg-white/10"></div>
-                        <div class="space-y-2 text-center">
-                            <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Path Loss <span id="current-band-display" class="text-indigo-400">(1800 MHz)</span></p>
-                            <p id="map-fspl-res" class="text-lg font-black text-indigo-300 tracking-tight">- dB</p>
+                        <div class="space-y-1 text-center">
+                            <p class="text-[7px] md:text-[8px] text-slate-400 font-bold uppercase tracking-widest">FSPL <span id="current-band-display" class="text-indigo-400">(1800 MHz)</span></p>
+                            <p id="map-fspl-res" class="text-sm md:text-xl font-black text-indigo-300 tracking-tight">- dB</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- DRAGGABLE HUD: Inspector Panels (Positioned Top Left below Menu) -->
-                <div id="hud-point-panels" class="hidden hud-widget top-24 left-4 md:left-6 w-[calc(100%-6rem)] md:w-80 animate-fade-in" style="pointer-events: none;">
+                <!-- DRAGGABLE HUD: Inspector Panels -->
+                <div id="hud-point-panels" class="hidden hud-widget top-24 left-4 md:left-6 w-[calc(100%-5rem)] md:w-80 animate-fade-in z-[150]">
                     <div class="glass-panel rounded-[2rem] border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col pointer-events-auto">
                         <div class="drag-handle w-full bg-white/5 py-2 flex items-center justify-center border-b border-white/5" id="drag-handle-inspector">
                             <i data-lucide="grip-horizontal" class="w-4 h-4 text-slate-500"></i>
                         </div>
                         <div class="p-5 md:p-6 space-y-4">
                             <div class="flex items-center justify-between mb-1">
-                                 <h2 class="text-[10px] font-black text-white uppercase tracking-[0.2em]">Point Data</h2>
+                                 <h2 class="text-[10px] font-black text-white uppercase tracking-[0.2em]">Coordinates</h2>
                                  <button onclick="toggleCoordinateHUD()" class="md:hidden p-1 text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                             </div>
                             <div class="space-y-4">
@@ -275,11 +230,11 @@
 
                 <!-- BOTTOM CENTER: Search Bar -->
                 <div class="absolute bottom-6 left-4 right-4 md:left-1/2 md:transform md:-translate-x-1/2 md:w-[32rem] z-[100] pointer-events-none flex flex-col justify-end items-center">
-                    <div class="w-full relative pointer-events-auto flex flex-col items-center">
+                    <div class="w-full relative pointer-events-auto">
                         <!-- Search Results Dropdown (Opens UP) -->
                         <div id="search-results" class="hidden glass-panel absolute bottom-full left-0 right-0 mb-2 rounded-2xl border-white/10 shadow-2xl max-h-60 overflow-y-auto animate-fade-in flex-col-reverse"></div>
                         <!-- Search Input -->
-                        <div class="glass-panel flex items-center p-1.5 rounded-2xl shadow-2xl border-white/20 w-full">
+                        <div class="glass-panel flex items-center p-1.5 rounded-2xl shadow-2xl border-white/20">
                             <div class="pl-4 text-slate-500"><i data-lucide="search" class="w-4 h-4"></i></div>
                             <input type="text" id="map-search-input" placeholder="Search address or location..." class="flex-1 bg-transparent border-none outline-none text-sm py-2.5 px-3 text-white placeholder-slate-500" onkeyup="handleSearchKeyUp(event)">
                             <button onclick="clearSearch()" id="clear-search-btn" class="hidden p-2 text-slate-500 hover:text-white transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -414,24 +369,6 @@
             makeDraggable(document.getElementById("map-result-box"), document.getElementById("drag-handle-results"));
         };
 
-        // PWA Install Logic
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-app-btn').classList.remove('hidden');
-        });
-
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    deferredPrompt = null;
-                    document.getElementById('install-app-btn').classList.add('hidden');
-                });
-            }
-        }
-
         function toggleSidebar() {
             const s = document.getElementById('sidebar'), o = document.getElementById('sidebar-overlay'), i = document.getElementById('menu-icon');
             sidebarOpen = !sidebarOpen;
@@ -535,7 +472,7 @@
                 userLocM = L.circleMarker(e.latlng, { radius: 8, fillColor: '#3b82f6', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map);
                 showToast('Location Acquired');
             });
-            map.once('locationerror', function(e) { showToast('GPS Denied or Unavailable', 'error'); });
+            map.once('locationerror', function(e) { showToast('GPS Denied', 'error'); });
         }
 
         function toggleCoordinateHUD() {
@@ -616,7 +553,7 @@
 
         function sMap(n, isTargetLockOverride = false) {
             if(isTargetLockOverride) {
-                points[1] = getC(2) || points[1]; 
+                points[1] = getC(2) || points[1]; // fallback if manual logic triggered it
                 if(p2M) map.removeLayer(p2M);
                 p2M = L.marker([points[1].lat, points[1].lng], {icon: m2I}).addTo(map);
                 rVec(); rHUD(); return;
@@ -680,6 +617,7 @@
 
         function onMapClick(e) {
             if (isSiteLocked) {
+                // If site is locked, just update Point 2 immediately without prompts
                 points[1] = {lat: e.latlng.lat, lng: e.latlng.lng};
                 if (p2M) map.removeLayer(p2M);
                 p2M = L.marker([e.latlng.lat, e.latlng.lng], {icon: m2I}).addTo(map);
@@ -711,6 +649,7 @@
             if(e) e.stopPropagation(); 
 
             if (isSiteLocked && points.length > 0) {
+                // Partial clear (preserve Site)
                 points = [points[0]];
                 if(p2M) map.removeLayer(p2M); 
                 if(poly) map.removeLayer(poly);
@@ -718,6 +657,7 @@
                 ['p2-lat','p2-lon','p2-zone','p2-east','p2-north'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
                 showToast('Target Reset (Site Locked)');
             } else {
+                // Full Clear
                 points = [];
                 if(p1M) map.removeLayer(p1M); if(p2M) map.removeLayer(p2M); if(poly) map.removeLayer(poly);
                 document.getElementById('map-result-box').classList.add('hidden');
